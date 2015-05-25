@@ -1,5 +1,6 @@
 #include "pebble.h"
-
+#define BG_ARRAY_KEY 145
+#define LAST_TIMESTAMP_KEY 146
 // global window variables
 // ANYTHING THAT IS CALLED BY PEBBLE API HAS TO BE NOT STATIC
 
@@ -18,6 +19,7 @@ BitmapLayer *icon_layer = NULL;
 BitmapLayer *cgmicon_layer = NULL;
 BitmapLayer *appicon_layer = NULL;
 BitmapLayer *batticon_layer = NULL;
+Layer *graph_layer = NULL;
 
 GBitmap *icon_bitmap = NULL;
 GBitmap *appicon_bitmap = NULL;
@@ -29,6 +31,9 @@ InverterLayer *inv_battlevel_layer = NULL;
 
 static char time_watch_text[] = "00:00";
 static char date_app_text[] = "Wed 13 Jan";
+
+uint16_t bgValueArray[25];
+uint32_t bgLastTimestamp;
 
 // variables for AppSync
 AppSync sync_cgm;
@@ -113,11 +118,6 @@ static const uint16_t SPECVALUE_BG_MGDL = 20;
 static const uint16_t SHOWLOW_BG_MGDL = 40;
 static const uint16_t HYPOLOW_BG_MGDL = 55;
 static const uint16_t BIGLOW_BG_MGDL = 60;
-//static const uint16_t MIDLOW_BG_MGDL = 70;
-//static const uint16_t LOW_BG_MGDL = 80;
-
-//static const uint16_t HIGH_BG_MGDL = 180;
-//static const uint16_t MIDHIGH_BG_MGDL = 240;
 static const uint16_t BIGHIGH_BG_MGDL = 300;
 static const uint16_t SHOWHIGH_BG_MGDL = 400;
 
@@ -130,11 +130,6 @@ static const uint16_t SPECVALUE_BG_MMOL = 11;
 static const uint16_t SHOWLOW_BG_MMOL = 22;
 static const uint16_t HYPOLOW_BG_MMOL = 31;
 static const uint16_t BIGLOW_BG_MMOL = 33;
-//static const uint16_t MIDLOW_BG_MMOL = 40;
-//static const uint16_t LOW_BG_MMOL = 44;
-
-//static const uint16_t HIGH_BG_MMOL = 120;
-//static const uint16_t MIDHIGH_BG_MMOL = 135;
 static const uint16_t BIGHIGH_BG_MMOL = 150;
 static const uint16_t SHOWHIGH_BG_MMOL = 220;
 
@@ -143,10 +138,6 @@ static const uint16_t SHOWHIGH_BG_MMOL = 220;
 static const uint8_t SPECVALUE_SNZ_MIN = 30;
 static const uint8_t HYPOLOW_SNZ_MIN = 5;
 static const uint8_t BIGLOW_SNZ_MIN = 5;
-//static const uint8_t MIDLOW_SNZ_MIN = 10;
-//static const uint8_t LOW_SNZ_MIN = 15;
-//static const uint8_t HIGH_SNZ_MIN = 30;
-//static const uint8_t MIDHIGH_SNZ_MIN = 30;
 static const uint8_t BIGHIGH_SNZ_MIN = 30;
 	
 // Vibration Levels; 0 = NONE; 1 = LOW; 2 = MEDIUM; 3 = HIGH
@@ -154,8 +145,6 @@ static const uint8_t BIGHIGH_SNZ_MIN = 30;
 static const uint8_t SPECVALUE_VIBE = 2;
 static const uint8_t HYPOLOWBG_VIBE = 3;
 static const uint8_t BIGLOWBG_VIBE = 3;
-//static const uint8_t LOWBG_VIBE = 3;
-//static const uint8_t HIGHBG_VIBE = 2;
 static const uint8_t BIGHIGHBG_VIBE = 2;
 static const uint8_t DOUBLEDOWN_VIBE = 3;
 static const uint8_t APPSYNC_ERR_VIBE = 1;
@@ -2028,6 +2017,73 @@ void handle_minute_tick_cgm(struct tm* tick_time_cgm, TimeUnits units_changed_cg
 	
 } // end handle_minute_tick_cgm
 
+/////////////////////////////////////////////////////
+////////////////Graph Drawing Stuff!////////////////
+uint16_t maxBg() {
+  uint8_t i = 0;
+  uint16_t tempMaxBg = 250;
+  for(;i < 25; i++) {
+    if(bgValueArray[i] > tempMaxBg) {
+      tempMaxBg = bgValueArray[i];
+    }
+  }
+  return tempMaxBg;
+}
+
+uint16_t yScale(unsigned int bg) {
+  return ((((bg-40)/(250-40))*(84-166))+166);
+}
+
+uint16_t xScale(uint16_t relativeAge) {
+  return 125 - (relativeAge * 5);
+}
+
+
+static void layer_update_callback(Layer *layer, GContext* ctx) {
+  //0, 0, 144, 168
+  uint16_t radius = 2;
+  uint16_t i = 0;
+  
+  graphics_context_set_stroke_color(ctx, GColorWhite);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  bgValueArray[0] = 120;
+  bgValueArray[1] = 125;
+  bgValueArray[2] = 128;
+  bgValueArray[3] = 130;
+  bgValueArray[4] = 128;
+  bgValueArray[5] = 122;
+  bgValueArray[6] = 113;
+  bgValueArray[7] = 100;
+  bgValueArray[8] = 95;
+  bgValueArray[9] = 90;
+  bgValueArray[10] = 90;
+  bgValueArray[11] = 87;
+  bgValueArray[12] = 85;
+  bgValueArray[13] = 80;
+  bgValueArray[14] = 82;
+  bgValueArray[15] = 70;
+  bgValueArray[16] = 60;
+  for(;i < 25; i++) {
+    graphics_fill_circle(ctx, GPoint(xScale(i),yScale(bgValueArray[i])), radius);
+  }
+  
+  
+  //graphics_draw_circle(ctx, GPoint(25, 120), radius);
+  //graphics_fill_circle(ctx, GPoint(30, 130), radius);
+  
+  
+  graphics_draw_line(ctx, GPoint(0, 125), GPoint(150, 125));
+  graphics_draw_line(ctx, GPoint(0, 155), GPoint(150, 155));
+  
+ // persist_read_data(123, test, 4);
+
+}
+
+
+/////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+
+
 void window_load_cgm(Window *window_cgm) {
 	//APP_LOG(APP_LOG_LEVEL_INFO, "WINDOW LOAD");
 	
@@ -2118,18 +2174,25 @@ void window_load_cgm(Window *window_cgm) {
 	time_watch_layer = text_layer_create(GRect(0, 82, 144, 44));
 	text_layer_set_text_color(time_watch_layer, GColorWhite);
 	text_layer_set_background_color(time_watch_layer, GColorClear);
-	text_layer_set_font(time_watch_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
-	text_layer_set_text_alignment(time_watch_layer, GTextAlignmentCenter);
+	text_layer_set_font(time_watch_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+	text_layer_set_text_alignment(time_watch_layer, GTextAlignmentLeft);
 	layer_add_child(window_layer_cgm, text_layer_get_layer(time_watch_layer));
 	
 	// CURRENT ACTUAL DATE FROM APP
-	date_app_layer = text_layer_create(GRect(0, 120, 144, 25));
+	date_app_layer = text_layer_create(GRect(0, 82, 144, 25));
 	text_layer_set_text_color(date_app_layer, GColorWhite);
 	text_layer_set_background_color(date_app_layer, GColorClear);
-	text_layer_set_font(date_app_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-	text_layer_set_text_alignment(date_app_layer, GTextAlignmentCenter);
+	text_layer_set_font(date_app_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+	text_layer_set_text_alignment(date_app_layer, GTextAlignmentRight);
 	draw_date_from_app();
 	layer_add_child(window_layer_cgm, text_layer_get_layer(date_app_layer));
+  
+  // Graph!
+  
+  graph_layer = layer_create(GRect(0, 0, 144, 168));
+  layer_set_update_proc(graph_layer, layer_update_callback);
+  layer_add_child(window_layer_cgm, graph_layer);
+  
 	
 	// put " " (space) in bg field so logo continues to show
 	// " " (space) also shows these are init values, not bad or null values
