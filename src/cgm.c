@@ -1,5 +1,6 @@
 #include "pebble.h"
-
+#define BG_ARRAY_KEY 145
+#define LAST_TIMESTAMP_KEY 146
 // global window variables
 // ANYTHING THAT IS CALLED BY PEBBLE API HAS TO BE NOT STATIC
 
@@ -12,12 +13,12 @@ TextLayer *battlevel_layer = NULL;
 TextLayer *t1dname_layer = NULL;
 TextLayer *time_watch_layer = NULL;
 TextLayer *time_app_layer = NULL;
-TextLayer *date_app_layer = NULL;
 
 BitmapLayer *icon_layer = NULL;
 BitmapLayer *cgmicon_layer = NULL;
 BitmapLayer *appicon_layer = NULL;
 BitmapLayer *batticon_layer = NULL;
+Layer *graph_layer = NULL;
 
 GBitmap *icon_bitmap = NULL;
 GBitmap *appicon_bitmap = NULL;
@@ -25,10 +26,17 @@ GBitmap *cgmicon_bitmap = NULL;
 GBitmap *specialvalue_bitmap = NULL;
 GBitmap *batticon_bitmap = NULL;
 
-InverterLayer *inv_battlevel_layer = NULL;
+/*InverterLayer *inv_battlevel_layer = NULL;*/
 
 static char time_watch_text[] = "00:00";
-static char date_app_text[] = "Wed 13 Jan";
+/*static char date_app_text[] = "Wed 13 Jan";*/
+
+//GRAPH RELATEDED SHENANIGANS
+static uint16_t graphUpperBound = 90;
+static uint16_t graphLowerBound = 166;
+static uint16_t radius = 2;
+uint16_t numberOfPoints = 24;
+uint32_t bgLastTimestamp;
 
 // variables for AppSync
 AppSync sync_cgm;
@@ -113,11 +121,6 @@ static const uint16_t SPECVALUE_BG_MGDL = 20;
 static const uint16_t SHOWLOW_BG_MGDL = 40;
 static const uint16_t HYPOLOW_BG_MGDL = 55;
 static const uint16_t BIGLOW_BG_MGDL = 60;
-//static const uint16_t MIDLOW_BG_MGDL = 70;
-//static const uint16_t LOW_BG_MGDL = 80;
-
-//static const uint16_t HIGH_BG_MGDL = 180;
-//static const uint16_t MIDHIGH_BG_MGDL = 240;
 static const uint16_t BIGHIGH_BG_MGDL = 300;
 static const uint16_t SHOWHIGH_BG_MGDL = 400;
 
@@ -130,11 +133,6 @@ static const uint16_t SPECVALUE_BG_MMOL = 11;
 static const uint16_t SHOWLOW_BG_MMOL = 22;
 static const uint16_t HYPOLOW_BG_MMOL = 31;
 static const uint16_t BIGLOW_BG_MMOL = 33;
-//static const uint16_t MIDLOW_BG_MMOL = 40;
-//static const uint16_t LOW_BG_MMOL = 44;
-
-//static const uint16_t HIGH_BG_MMOL = 120;
-//static const uint16_t MIDHIGH_BG_MMOL = 135;
 static const uint16_t BIGHIGH_BG_MMOL = 150;
 static const uint16_t SHOWHIGH_BG_MMOL = 220;
 
@@ -143,10 +141,6 @@ static const uint16_t SHOWHIGH_BG_MMOL = 220;
 static const uint8_t SPECVALUE_SNZ_MIN = 30;
 static const uint8_t HYPOLOW_SNZ_MIN = 5;
 static const uint8_t BIGLOW_SNZ_MIN = 5;
-//static const uint8_t MIDLOW_SNZ_MIN = 10;
-//static const uint8_t LOW_SNZ_MIN = 15;
-//static const uint8_t HIGH_SNZ_MIN = 30;
-//static const uint8_t MIDHIGH_SNZ_MIN = 30;
 static const uint8_t BIGHIGH_SNZ_MIN = 30;
 	
 // Vibration Levels; 0 = NONE; 1 = LOW; 2 = MEDIUM; 3 = HIGH
@@ -154,8 +148,6 @@ static const uint8_t BIGHIGH_SNZ_MIN = 30;
 static const uint8_t SPECVALUE_VIBE = 2;
 static const uint8_t HYPOLOWBG_VIBE = 3;
 static const uint8_t BIGLOWBG_VIBE = 3;
-//static const uint8_t LOWBG_VIBE = 3;
-//static const uint8_t HIGHBG_VIBE = 2;
 static const uint8_t BIGHIGHBG_VIBE = 2;
 static const uint8_t DOUBLEDOWN_VIBE = 3;
 static const uint8_t APPSYNC_ERR_VIBE = 1;
@@ -374,20 +366,33 @@ static void destroy_null_TextLayer(TextLayer **txt_layer) {
 	}
 //APP_LOG(APP_LOG_LEVEL_INFO, "DESTROY NULL TEXT LAYER: EXIT CODE");
 } // end destroy_null_TextLayer
-
-static void destroy_null_InverterLayer(InverterLayer **inv_layer) {
-	//APP_LOG(APP_LOG_LEVEL_INFO, "DESTROY NULL INVERTER LAYER: ENTER CODE");
+static void destroy_null_Layer(Layer **layer) {
+	//APP_LOG(APP_LOG_LEVEL_INFO, "DESTROY NULL TEXT LAYER: ENTER CODE");
 	
-	if (*inv_layer != NULL) {
-		//APP_LOG(APP_LOG_LEVEL_INFO, "DESTROY NULL INVERTER LAYER: POINTER EXISTS, DESTROY INVERTER LAYER");
-			inverter_layer_destroy(*inv_layer);
-			if (*inv_layer != NULL) {
-				//APP_LOG(APP_LOG_LEVEL_INFO, "DESTROY NULL INVERTER LAYER: POINTER EXISTS, SET POINTER TO NULL");
-				*inv_layer = NULL;
+	if (*layer != NULL) {
+		//APP_LOG(APP_LOG_LEVEL_INFO, "DESTROY NULL TEXT LAYER: POINTER EXISTS, DESTROY TEXT LAYER");
+			layer_destroy(*layer);
+			if (*layer != NULL) {
+				//APP_LOG(APP_LOG_LEVEL_INFO, "DESTROY NULL TEXT LAYER: POINTER EXISTS, SET POINTER TO NULL");
+				*layer = NULL;
 			}
 	}
+//APP_LOG(APP_LOG_LEVEL_INFO, "DESTROY NULL TEXT LAYER: EXIT CODE");
+} // end destroy_null_TextLayer
+
+/*static void destroy_null_InverterLayer(InverterLayer **inv_layer) {*/
+	//APP_LOG(APP_LOG_LEVEL_INFO, "DESTROY NULL INVERTER LAYER: ENTER CODE");
+	
+	/*if (*inv_layer != NULL) {*/
+		//APP_LOG(APP_LOG_LEVEL_INFO, "DESTROY NULL INVERTER LAYER: POINTER EXISTS, DESTROY INVERTER LAYER");
+			/*inverter_layer_destroy(*inv_layer);*/
+			/*if (*inv_layer != NULL) {*/
+				//APP_LOG(APP_LOG_LEVEL_INFO, "DESTROY NULL INVERTER LAYER: POINTER EXISTS, SET POINTER TO NULL");
+				/**inv_layer = NULL;*/
+			/*}*/
+	/*}*/
 //APP_LOG(APP_LOG_LEVEL_INFO, "DESTROY NULL INVERTER LAYER: EXIT CODE");
-} // end destroy_null_InverterLayer
+/*} // end destroy_null_InverterLayer*/
 
 static void create_update_bitmap(GBitmap **bmp_image, BitmapLayer *bmp_layer, const int resource_id) {
 	//APP_LOG(APP_LOG_LEVEL_INFO, " CREATE UPDATE BITMAP: ENTER CODE");
@@ -593,12 +598,6 @@ static void draw_date_from_app() {
 			text_layer_set_text(time_watch_layer, time_watch_text);
 	}
 	}
-	
-	draw_return = strftime(date_app_text, DATE_TEXTBUFF_SIZE, "%a %d %b", current_d_app);
-	if (draw_return != 0) {
-		text_layer_set_text(date_app_layer, date_app_text);
-	}
-
 } // end draw_date_from_app
 
 void sync_error_callback_cgm(DictionaryResult appsync_dict_error, AppMessageResult appsync_error, void *context) {
@@ -1775,7 +1774,7 @@ static void load_battlevel() {
 	// CODE START
 	
 	// initialize inverter layer to hide
-	layer_set_hidden((Layer *)inv_battlevel_layer, true);
+	/*layer_set_hidden((Layer *)inv_battlevel_layer, true);*/
 		
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "LOAD BATTLEVEL, LAST BATTLEVEL: %s", last_battlevel);
 	
@@ -1792,7 +1791,7 @@ static void load_battlevel() {
 		// Zero battery level; set here, so if we get zero later we know we have an error instead
 		//APP_LOG(APP_LOG_LEVEL_INFO, "LOAD BATTLEVEL, ZERO BATTERY, SET STRING");
 		text_layer_set_text(battlevel_layer, "0%");
-		layer_set_hidden((Layer *)inv_battlevel_layer, false);
+		/*layer_set_hidden((Layer *)inv_battlevel_layer, false);*/
 		if (!LowBatteryAlert) {
 			//APP_LOG(APP_LOG_LEVEL_INFO, "LOAD BATTLEVEL, ZERO BATTERY, VIBRATE");
 			alert_handler_cgm(LOWBATTERY_VIBE);
@@ -1811,7 +1810,7 @@ static void load_battlevel() {
 		// got a negative or out of bounds or error battery level
 		//APP_LOG(APP_LOG_LEVEL_INFO, "LOAD BATTLEVEL, UNKNOWN, ERROR BATTERY");
 		text_layer_set_text(battlevel_layer, "ERR");
-		layer_set_hidden((Layer *)inv_battlevel_layer, false);
+		/*layer_set_hidden((Layer *)inv_battlevel_layer, false);*/
 		create_update_bitmap(&batticon_bitmap,batticon_layer,BATTLEVEL_ICONS[BATTNONE_ICON_INDX]);
 		return;
 	}
@@ -1855,7 +1854,7 @@ static void load_battlevel() {
 		}
 		else if (current_battlevel > 10) {
 			create_update_bitmap(&batticon_bitmap,batticon_layer,BATTLEVEL_ICONS[BATT20_ICON_INDX]);
-			layer_set_hidden((Layer *)inv_battlevel_layer, false);
+			/*layer_set_hidden((Layer *)inv_battlevel_layer, false);*/
 			if (!LowBatteryAlert) {
 				//APP_LOG(APP_LOG_LEVEL_INFO, "LOAD BATTLEVEL, LOW BATTERY, 20 OR LESS, VIBRATE");
 				alert_handler_cgm(LOWBATTERY_VIBE);
@@ -1864,7 +1863,7 @@ static void load_battlevel() {
 		}
 		else if (current_battlevel > 5) {
 			create_update_bitmap(&batticon_bitmap,batticon_layer,BATTLEVEL_ICONS[BATT10_ICON_INDX]);
-			layer_set_hidden((Layer *)inv_battlevel_layer, false);
+			/*layer_set_hidden((Layer *)inv_battlevel_layer, false);*/
 			if (!LowBatteryAlert) {
 				//APP_LOG(APP_LOG_LEVEL_INFO, "LOAD BATTLEVEL, LOW BATTERY, 10 OR LESS, VIBRATE");
 				alert_handler_cgm(LOWBATTERY_VIBE);
@@ -1873,7 +1872,7 @@ static void load_battlevel() {
 		}
 		else if ( (current_battlevel > 0) && (current_battlevel <= 5) ) {
 			create_update_bitmap(&batticon_bitmap,batticon_layer,BATTLEVEL_ICONS[BATTEMPTY_ICON_INDX]);
-			layer_set_hidden((Layer *)inv_battlevel_layer, false);
+			/*layer_set_hidden((Layer *)inv_battlevel_layer, false);*/
 			if (!LowBatteryAlert) {
 				//APP_LOG(APP_LOG_LEVEL_INFO, "LOAD BATTLEVEL, LOW BATTERY, 5 OR LESS, VIBRATE");
 				alert_handler_cgm(LOWBATTERY_VIBE);
@@ -2018,15 +2017,149 @@ void handle_minute_tick_cgm(struct tm* tick_time_cgm, TimeUnits units_changed_cg
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "lastAlertTime OUT:	%i", lastAlertTime);
 	
 	} 
-	else if (units_changed_cgm & DAY_UNIT) {
-		//APP_LOG(APP_LOG_LEVEL_INFO, "TICK TIME DAY CODE");
-		tick_return_cgm = strftime(date_app_text, DATE_TEXTBUFF_SIZE, "%a %d", tick_time_cgm);
-		if (tick_return_cgm != 0) {
-			text_layer_set_text(date_app_layer, date_app_text);
-		}
-	}
-	
 } // end handle_minute_tick_cgm
+
+/////////////////////////////////////////////////////
+////////////////Graph Drawing Stuff!////////////////
+uint16_t findMaxBg(uint16_t bgValueArray[]) {
+  uint8_t i = 0;
+  uint16_t tempMaxBg = 250;
+  for(;i < numberOfPoints; i++) {
+    if(bgValueArray[i] > tempMaxBg) {
+      tempMaxBg = bgValueArray[i];
+    }
+  }
+  return tempMaxBg;
+}
+
+static uint16_t yScale(unsigned int bg, uint16_t maxBg) {
+  int32_t aTemp = ((100*(bg-40))/(maxBg-40));
+  return (aTemp*(graphUpperBound-graphLowerBound))/100+graphLowerBound;
+}
+
+uint16_t xScale(uint16_t relativeAge) {
+  return 140 - (relativeAge * (140/(numberOfPoints -1)));
+}
+
+void buildUpArray(uint8_t storageArray[], uint16_t bgValueArray[]) {
+    uint16_t i = 0;
+    for(; i < numberOfPoints; i++) {
+        if(storageArray[i] == 1) {
+            bgValueArray[i] = storageArray[i+numberOfPoints] + 200;
+        } else {
+            bgValueArray[i] = storageArray[i+numberOfPoints];
+        }
+    }
+}
+void compressArray(uint8_t storageArray[], uint16_t bgValueArray[]) {
+    uint16_t i = 0;
+    for(; i < numberOfPoints; i++) {
+        if(bgValueArray[i] > 200) {
+            storageArray[i] = 1;
+            storageArray[i+numberOfPoints] = bgValueArray[i] - 200;
+        } else {
+            storageArray[i] = 0;
+            storageArray[i+numberOfPoints] = bgValueArray[i];
+        }
+    }
+}
+
+static void layer_update_callback(Layer *layer, GContext* ctx) {
+  uint16_t bgValueArray[numberOfPoints];
+  uint8_t storageArray[numberOfPoints*2];
+  //0, 0, 144, 168
+  int16_t i = 0;
+  uint16_t bgForGraph = current_bg;
+  uint16_t maxBg;
+  uint32_t last_cgm_timestamp = 0;
+  uint32_t diff = 0;
+
+  for(i = 0; i < numberOfPoints; i++) {
+    bgValueArray[i] = 0;
+  }
+  for(i = 0; i < numberOfPoints*2; i++) {
+    storageArray[i] = 0;
+  }
+  //current_bg current bg value, might be mmol, if so multiply by 1.8
+  if(currentBG_isMMOL) {
+    bgForGraph = current_bg * 1.8;
+  }
+  if(persist_exists(BG_ARRAY_KEY)){
+    persist_read_data(BG_ARRAY_KEY, storageArray, sizeof(storageArray));
+    buildUpArray(storageArray, bgValueArray);
+  } 
+  /*else {*/
+  /*bgValueArray[0] = 40;*/
+  /*bgValueArray[1] = 125;*/
+  /*bgValueArray[2] = 128;*/
+  /*bgValueArray[3] = 130;*/
+  /*bgValueArray[4] = 128;*/
+  /*bgValueArray[5] = 122;*/
+  /*bgValueArray[6] = 113;*/
+  /*bgValueArray[7] = 100;*/
+  /*bgValueArray[8] = 95;*/
+  /*bgValueArray[9] = 200;*/
+  /*bgValueArray[10] = 200;*/
+  /*bgValueArray[11] = 250;*/
+  /*bgValueArray[12] = 220;*/
+  /*bgValueArray[13] = 200;*/
+  /*bgValueArray[14] = 160;*/
+  /*bgValueArray[15] = 120;*/
+  /*bgValueArray[16] = 110;*/
+  /*bgValueArray[17] = 90;*/
+  /*bgValueArray[18] = 87;*/
+  /*bgValueArray[19] = 85;*/
+  /*bgValueArray[20] = 80;*/
+  /*bgValueArray[21] = 72;*/
+  /*bgValueArray[22] = 90;*/
+  /*bgValueArray[23] = 40;*/
+  /*}*/
+
+  //Update BgArray
+  if(persist_exists(LAST_TIMESTAMP_KEY)) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Plotting from memory");
+    last_cgm_timestamp = persist_read_int(LAST_TIMESTAMP_KEY);
+  }
+  diff = last_cgm_timestamp - current_app_time;
+  if (diff > (5*50)) {
+          uint16_t back = diff/(5*50);
+          for(i = numberOfPoints -1; i >= 0; i--) {
+            if ((i + back) > (numberOfPoints - 1)) {
+                bgValueArray[i] = bgValueArray[i + back];
+            }
+          }
+          for(i = 0; i < back; i++) {
+            bgValueArray[i] = 0;
+          }
+        bgValueArray[diff/(5*50)] = bgForGraph;
+  }
+
+  compressArray(storageArray, bgValueArray);
+  persist_write_data(BG_ARRAY_KEY, storageArray, sizeof(storageArray));
+  persist_write_int(LAST_TIMESTAMP_KEY, current_cgm_time);
+
+  graphics_context_set_stroke_color(ctx, GColorWhite);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  maxBg = findMaxBg(bgValueArray);
+  for(i = 0;i < numberOfPoints; i++) {
+    /*APP_LOG(APP_LOG_LEVEL_INFO, "GRAPH %u", bgValueArray[i]);*/
+    if(bgValueArray[i] > 14) {
+        graphics_fill_circle(ctx, GPoint(xScale(i),yScale(bgValueArray[i], maxBg)), radius);
+    }
+  }
+  //High and Low lines scaled
+  graphics_draw_line(ctx, GPoint(0, yScale(70, maxBg)), GPoint(150, yScale(70, maxBg)));
+  graphics_draw_line(ctx, GPoint(0, yScale(170, maxBg)), GPoint(150, yScale(170, maxBg)));
+ 
+ // persist_read_data(123, test, 4);
+ // persist_read_int(123, test, 4);
+
+}
+
+
+/////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+
 
 void window_load_cgm(Window *window_cgm) {
 	//APP_LOG(APP_LOG_LEVEL_INFO, "WINDOW LOAD");
@@ -2111,25 +2244,22 @@ void window_load_cgm(Window *window_cgm) {
 	layer_add_child(window_layer_cgm, text_layer_get_layer(battlevel_layer));
 	
 	// INVERTER BATTERY LAYER
-	inv_battlevel_layer = inverter_layer_create(GRect(110, 149, 38, 15));
-	layer_add_child(window_get_root_layer(window_cgm), inverter_layer_get_layer(inv_battlevel_layer));
+	/*inv_battlevel_layer = inverter_layer_create(GRect(110, 149, 38, 15));*/
+	/*layer_add_child(window_get_root_layer(window_cgm), inverter_layer_get_layer(inv_battlevel_layer));*/
 
 	// CURRENT ACTUAL TIME FROM WATCH
-	time_watch_layer = text_layer_create(GRect(0, 82, 144, 44));
-	text_layer_set_text_color(time_watch_layer, GColorWhite);
-	text_layer_set_background_color(time_watch_layer, GColorClear);
-	text_layer_set_font(time_watch_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
-	text_layer_set_text_alignment(time_watch_layer, GTextAlignmentCenter);
+	time_watch_layer = text_layer_create(GRect(0, 82, 45, 26));
+    text_layer_set_text_color(time_watch_layer, GColorWhite);
+    text_layer_set_background_color(time_watch_layer, GColorClear);
+	text_layer_set_font(time_watch_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+	text_layer_set_text_alignment(time_watch_layer, GTextAlignmentLeft);
 	layer_add_child(window_layer_cgm, text_layer_get_layer(time_watch_layer));
 	
-	// CURRENT ACTUAL DATE FROM APP
-	date_app_layer = text_layer_create(GRect(0, 120, 144, 25));
-	text_layer_set_text_color(date_app_layer, GColorWhite);
-	text_layer_set_background_color(date_app_layer, GColorClear);
-	text_layer_set_font(date_app_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-	text_layer_set_text_alignment(date_app_layer, GTextAlignmentCenter);
-	draw_date_from_app();
-	layer_add_child(window_layer_cgm, text_layer_get_layer(date_app_layer));
+  // Graph!
+  graph_layer = layer_create(GRect(0, 0, 144, 168));
+  layer_set_update_proc(graph_layer, layer_update_callback);
+  layer_add_child(window_layer_cgm, graph_layer);
+  
 	
 	// put " " (space) in bg field so logo continues to show
 	// " " (space) also shows these are init values, not bad or null values
@@ -2183,10 +2313,11 @@ void window_unload_cgm(Window *window_cgm) {
 	destroy_null_TextLayer(&t1dname_layer);
 	destroy_null_TextLayer(&time_watch_layer);
 	destroy_null_TextLayer(&time_app_layer);
-	destroy_null_TextLayer(&date_app_layer);
+
+    destroy_null_Layer(&graph_layer);
 
 	//APP_LOG(APP_LOG_LEVEL_INFO, "WINDOW UNLOAD, DESTROY INVERTER LAYERS IF EXIST");	
-	destroy_null_InverterLayer(&inv_battlevel_layer);
+	/*destroy_null_InverterLayer(&inv_battlevel_layer);*/
 	
 	//APP_LOG(APP_LOG_LEVEL_INFO, "WINDOW UNLOAD OUT");
 } // end window_unload_cgm
@@ -2199,7 +2330,7 @@ static void init_cgm(void) {
 
 	// subscribe to the bluetooth connection service
 	bluetooth_connection_service_subscribe(handle_bluetooth_cgm);
-	
+
 	// init the window pointer to NULL if it needs it
 	if (window_cgm != NULL) {
 		window_cgm = NULL;
@@ -2208,7 +2339,7 @@ static void init_cgm(void) {
 	// create the windows
 	window_cgm = window_create();
 	window_set_background_color(window_cgm, GColorBlack);
-	window_set_fullscreen(window_cgm, true);
+	/*window_set_fullscreen(window_cgm, true);*/
 	window_set_window_handlers(window_cgm, (WindowHandlers) {
 		.load = window_load_cgm,
 		.unload = window_unload_cgm	
