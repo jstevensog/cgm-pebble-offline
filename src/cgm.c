@@ -945,6 +945,7 @@ static void load_bg() {
 //		MIDHIGH_BG_MGDL,	//7
 //		BIGHIGH_BG_MGDL,	//8
 //		SHOWHIGH_BG_MGDL	//9
+		SHOWHIGH_BG_MGDL	//2
 	};
 	
 	// ARRAY OF BG CONSTANTS; MMOL
@@ -959,6 +960,7 @@ static void load_bg() {
 //		MIDHIGH_BG_MMOL,	//7
 //		BIGHIGH_BG_MMOL,	//8
 //		SHOWHIGH_BG_MMOL	//9
+		SHOWHIGH_BG_MMOL	//2
 	};
 		
 	// INDEX FOR ARRAYS OF BG CONSTANTS
