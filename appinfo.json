@@ -103,16 +103,6 @@
                 "type": "png"
             },
             {
-                "file": "images/rcvron.png",
-                "name": "IMAGE_RCVRON",
-                "type": "png"
-            },
-            {
-                "file": "images/rcvroff.png",
-                "name": "IMAGE_RCVROFF",
-                "type": "png"
-            },
-            {
                 "file": "images/err.png",
                 "name": "IMAGE_ERR",
                 "type": "png"

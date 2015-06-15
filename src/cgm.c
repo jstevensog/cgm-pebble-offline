@@ -16,12 +16,12 @@ TextLayer *time_app_layer = NULL;
 TextLayer *date_app_layer = NULL;
 
 BitmapLayer *icon_layer = NULL;
-BitmapLayer *cgmicon_layer = NULL;
+//BitmapLayer *cgmicon_layer = NULL;
 BitmapLayer *appicon_layer = NULL;
 
 GBitmap *icon_bitmap = NULL;
 GBitmap *appicon_bitmap = NULL;
-GBitmap *cgmicon_bitmap = NULL;
+//GBitmap *cgmicon_bitmap = NULL;
 GBitmap *specialvalue_bitmap = NULL;
 
 static char time_watch_text[] = "00:00";
@@ -237,16 +237,16 @@ static const uint8_t TIMEAGO_ICONS[] = {
 	RESOURCE_ID_IMAGE_NONE,			//0
 	RESOURCE_ID_IMAGE_PHONEON,		//1
 	RESOURCE_ID_IMAGE_PHONEOFF,	 	//2
-	RESOURCE_ID_IMAGE_RCVRON,		//3
-	RESOURCE_ID_IMAGE_RCVROFF		//4
+//	RESOURCE_ID_IMAGE_RCVRON,		//3
+//	RESOURCE_ID_IMAGE_RCVROFF		//4
 };
 
 // INDEX FOR ARRAY OF TIMEAGO ICONS
 static const uint8_t NONE_TIMEAGO_ICON_INDX = 0;
 static const uint8_t PHONEON_ICON_INDX = 1;
 static const uint8_t PHONEOFF_ICON_INDX = 2;
-static const uint8_t RCVRON_ICON_INDX = 3;
-static const uint8_t RCVROFF_ICON_INDX = 4;
+//static const uint8_t RCVRON_ICON_INDX = 3;
+//static const uint8_t RCVROFF_ICON_INDX = 4;
 
 
 
@@ -545,7 +545,7 @@ void handle_bluetooth_cgm(bool bt_connected) {
 		text_layer_set_text(time_app_layer, "");
 		
 	// erase cgm icon
-		create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);
+		//create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);
 		// turn phone icon off
 		create_update_bitmap(&appicon_bitmap,appicon_layer,TIMEAGO_ICONS[PHONEOFF_ICON_INDX]);
 	}
@@ -663,7 +663,7 @@ void sync_error_callback_cgm(DictionaryResult appsync_dict_error, AppMessageResu
 	text_layer_set_text(time_app_layer, "");
 		
 	// erase cgm icon
-	create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);
+	//create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);
 		
 	// turn phone icon off
 	create_update_bitmap(&appicon_bitmap,appicon_layer,TIMEAGO_ICONS[PHONEOFF_ICON_INDX]);
@@ -734,7 +734,7 @@ void inbox_dropped_handler_cgm(AppMessageResult appmsg_indrop_error, void *conte
 	text_layer_set_text(time_app_layer, "");
 		
 	// erase cgm icon
-	create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);
+	//create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);
 		
 	// turn phone icon off
 	create_update_bitmap(&appicon_bitmap,appicon_layer,TIMEAGO_ICONS[PHONEOFF_ICON_INDX]);
@@ -805,7 +805,7 @@ void outbox_failed_handler_cgm(DictionaryIterator *failed, AppMessageResult appm
 	text_layer_set_text(time_app_layer, "");
 		
 	// erase cgm icon
-	create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);
+	//create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);
 		
 	// turn phone icon off
 	create_update_bitmap(&appicon_bitmap,appicon_layer,TIMEAGO_ICONS[PHONEOFF_ICON_INDX]);
@@ -1443,11 +1443,11 @@ static void load_cgmtime() {
 		// Init code or error code; set text layer & icon to empty value 
 		//APP_LOG(APP_LOG_LEVEL_DEBUG, "LOAD CGMTIME, CGM TIME AGO INIT OR ERROR CODE: %s", cgm_label_buffer);
 		text_layer_set_text(cgmtime_layer, "");
-		create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);						
+		//create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);						
 	}
 	else {
 		// set rcvr on icon
-		create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[RCVRON_ICON_INDX]);
+		//create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[RCVRON_ICON_INDX]);
 			
 		time_now = time(NULL);
 		//APP_LOG(APP_LOG_LEVEL_DEBUG, "LOAD CGMTIME, CURRENT CGM TIME: %lu", current_cgm_time);
@@ -1483,7 +1483,7 @@ static void load_cgmtime() {
 		}
 		else {
 			strncpy (formatted_cgm_timeago, "ERR", TIMEAGO_BUFFER_SIZE);
-			create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);				
+			//create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);				
 		}
 			
 		text_layer_set_text(cgmtime_layer, formatted_cgm_timeago);
@@ -1493,7 +1493,7 @@ static void load_cgmtime() {
 			// set receiver off icon
 			//APP_LOG(APP_LOG_LEVEL_DEBUG, "LOAD CGMTIME, SET RCVR OFF ICON, CGM TIMEAGO DIFF: %d", cgm_timeago_diff);
 			//APP_LOG(APP_LOG_LEVEL_DEBUG, "LOAD CGMTIME, SET RCVR OFF ICON, LABEL: %s", cgm_label_buffer);
-			create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[RCVROFF_ICON_INDX]);
+			//create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[RCVROFF_ICON_INDX]);
 		
 			// Vibrate if we need to
 			if ((!CGMOffAlert) && (!PhoneOffAlert)) {
@@ -1585,7 +1585,7 @@ static void load_apptime(){
 							
 			// erase cgm ago times and cgm icon
 			text_layer_set_text(cgmtime_layer, "");
-			create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);
+			//create_update_bitmap(&cgmicon_bitmap,cgmicon_layer,TIMEAGO_ICONS[NONE_TIMEAGO_ICON_INDX]);
 		
 			//APP_LOG(APP_LOG_LEVEL_INFO, "LOAD APPTIME, CHECK IF HAVE TO VIBRATE");
 			// Vibrate if we need to
@@ -1978,13 +1978,14 @@ void window_load_cgm(Window *window_cgm) {
 	layer_add_child(window_layer_cgm, text_layer_get_layer(bg_layer));
 
 	// CGM TIME AGO ICON
-	cgmicon_layer = bitmap_layer_create(GRect(5, 63, 40, 24));
-	bitmap_layer_set_alignment(cgmicon_layer, GAlignLeft);
-	bitmap_layer_set_background_color(cgmicon_layer, GColorWhite);
-	layer_add_child(window_layer_cgm, bitmap_layer_get_layer(cgmicon_layer));	
+	//cgmicon_layer = bitmap_layer_create(GRect(5, 63, 40, 24));
+	//bitmap_layer_set_alignment(cgmicon_layer, GAlignLeft);
+	//bitmap_layer_set_background_color(cgmicon_layer, GColorWhite);
+	//layer_add_child(window_layer_cgm, bitmap_layer_get_layer(cgmicon_layer));	
 	
 	// CGM TIME AGO READING
-	cgmtime_layer = text_layer_create(GRect(28, 58, 40, 24));
+	//cgmtime_layer = text_layer_create(GRect(28, 58, 40, 24));
+	cgmtime_layer = text_layer_create(GRect(5, 63, 40, 24));
 	text_layer_set_text_color(cgmtime_layer, GColorBlack);
 	text_layer_set_background_color(cgmtime_layer, GColorClear);
 	text_layer_set_font(cgmtime_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
@@ -2087,13 +2088,13 @@ void window_unload_cgm(Window *window_cgm) {
 	//APP_LOG(APP_LOG_LEVEL_INFO, "WINDOW UNLOAD, DESTROY GBITMAPS IF EXIST");
 	destroy_null_GBitmap(&icon_bitmap);
 	destroy_null_GBitmap(&appicon_bitmap);
-	destroy_null_GBitmap(&cgmicon_bitmap);
+	//destroy_null_GBitmap(&cgmicon_bitmap);
 	destroy_null_GBitmap(&specialvalue_bitmap);
 	//destroy_null_GBitmap(&batticon_bitmap);
 
 	//APP_LOG(APP_LOG_LEVEL_INFO, "WINDOW UNLOAD, DESTROY BITMAPS IF EXIST");	
 	destroy_null_BitmapLayer(&icon_layer);
-	destroy_null_BitmapLayer(&cgmicon_layer);
+	//destroy_null_BitmapLayer(&cgmicon_layer);
 	destroy_null_BitmapLayer(&appicon_layer);
 	//destroy_null_BitmapLayer(&batticon_layer);
 
