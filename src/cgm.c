@@ -1985,7 +1985,7 @@ void window_load_cgm(Window *window_cgm) {
 	
 	// CGM TIME AGO READING
 	//cgmtime_layer = text_layer_create(GRect(28, 58, 40, 24));
-	cgmtime_layer = text_layer_create(GRect(5, 63, 40, 24));
+	cgmtime_layer = text_layer_create(GRect(5, 58, 40, 24));
 	text_layer_set_text_color(cgmtime_layer, GColorBlack);
 	text_layer_set_background_color(cgmtime_layer, GColorClear);
 	text_layer_set_font(cgmtime_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
