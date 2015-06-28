@@ -12,7 +12,7 @@
         "configurable"
     ],
     "companyName": "Nightscout Contributors",
-    "longName": "Offline NIGHTSCOUT",
+    "longName": "xDrip Watch Face",
     "projectType": "native",
     "resources": {
         "media": [
@@ -109,7 +109,7 @@
             }
         ]
     },
-    "shortName": "Offline Nightscout",
+    "shortName": "xDrip Watch Face",
     "uuid": "2c3f5ab3-7506-44e7-b8d0-2c63de32e1ec",
     "versionCode": 11,
     "versionLabel": "5.2",
