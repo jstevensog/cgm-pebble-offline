@@ -631,17 +631,17 @@ void sync_error_callback_cgm(DictionaryResult appsync_dict_error, AppMessageResu
 	
 	if (appsync_err_openerr == APP_MSG_OK) {
 		// reset AppSyncErrAlert to flag for vibrate
-	AppSyncErrAlert = false;
+		AppSyncErrAlert = false;
 	
-	// send message
+		// send message
 		appsync_err_senderr = app_message_outbox_send();
-	if (appsync_err_senderr != APP_MSG_OK ) {
-		APP_LOG(APP_LOG_LEVEL_INFO, "APP SYNC SEND ERROR");
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "APP SYNC SEND ERR CODE: %i RES: %s", appsync_err_senderr, translate_app_error(appsync_err_senderr));
-	} 
-	else {
-		return;
-	}
+		if (appsync_err_senderr != APP_MSG_OK  && appsync_err_senderr != APP_MSG_BUSY && appsync_err_senderr != APP_MSG_SEND_REJECTED) {
+			APP_LOG(APP_LOG_LEVEL_INFO, "APP SYNC SEND ERROR");
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "APP SYNC SEND ERR CODE: %i RES: %s", appsync_err_senderr, translate_app_error(appsync_err_senderr));
+		} 
+		else {
+			return;
+		}
 	}
 
 	APP_LOG(APP_LOG_LEVEL_INFO, "APP SYNC RESEND ERROR");
@@ -650,7 +650,7 @@ void sync_error_callback_cgm(DictionaryResult appsync_dict_error, AppMessageResu
 		
 	bluetooth_connected_cgm = bluetooth_connection_service_peek();
 		
-	if (!bluetooth_connected_cgm) {
+	if (!bluetooth_connected_cgm || appsync_err_openerr == APP_MSG_BUSY) {
 		// bluetooth is out, BT message already set; return out
 		return;
 	}
@@ -672,7 +672,7 @@ void sync_error_callback_cgm(DictionaryResult appsync_dict_error, AppMessageResu
 	if (!AppSyncErrAlert) {
 		//APP_LOG(APP_LOG_LEVEL_INFO, "APPSYNC ERROR: VIBRATE");
 		alert_handler_cgm(APPSYNC_ERR_VIBE);
-	AppSyncErrAlert = true;
+		AppSyncErrAlert = true;
 	} 
 		
 } // end sync_error_callback_cgm
@@ -700,20 +700,20 @@ void inbox_dropped_handler_cgm(AppMessageResult appmsg_indrop_error, void *conte
 	
 	appmsg_indrop_openerr = app_message_outbox_begin(&iter);
 	
-	if (appmsg_indrop_openerr == APP_MSG_OK) {
+	if (appmsg_indrop_openerr == APP_MSG_OK ) {
 			// reset AppMsgInDropAlert to flag for vibrate
 		AppMsgInDropAlert = false;
 	
 			// send message
 			appmsg_indrop_senderr = app_message_outbox_send();
-		if (appmsg_indrop_senderr != APP_MSG_OK ) {
+		if (appmsg_indrop_senderr != APP_MSG_OK || appmsg_indrop_senderr == APP_MSG_BUSY || appmsg_indrop_senderr == APP_MSG_SEND_REJECTED) {
 			APP_LOG(APP_LOG_LEVEL_INFO, "APPMSG IN DROP SEND ERROR");
 			APP_LOG(APP_LOG_LEVEL_DEBUG, "APPMSG IN DROP SEND ERR CODE: %i RES: %s", appmsg_indrop_senderr, translate_app_error(appmsg_indrop_senderr));
 		} 
 		else {
 			return;
 		}
-		}
+	}
 
 	APP_LOG(APP_LOG_LEVEL_INFO, "APPMSG IN DROP RESEND ERROR");
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "APPMSG IN DROP RESEND ERR CODE: %i RES: %s", appmsg_indrop_openerr, translate_app_error(appmsg_indrop_openerr));
@@ -777,14 +777,14 @@ void outbox_failed_handler_cgm(DictionaryIterator *failed, AppMessageResult appm
 	
 			// send message
 			appmsg_outfail_senderr = app_message_outbox_send();
-		if (appmsg_outfail_senderr != APP_MSG_OK ) {
+		if (appmsg_outfail_senderr != APP_MSG_OK) {
 			APP_LOG(APP_LOG_LEVEL_INFO, "APPMSG OUT FAIL SEND ERROR");
 			APP_LOG(APP_LOG_LEVEL_DEBUG, "APPMSG OUT FAIL SEND ERR CODE: %i RES: %s", appmsg_outfail_senderr, translate_app_error(appmsg_outfail_senderr));
 		} 
 		else {
 			return;
 		}
-		}
+	}
 
 	APP_LOG(APP_LOG_LEVEL_INFO, "APPMSG OUT FAIL RESEND ERROR");
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "APPMSG OUT FAIL RESEND ERR CODE: %i RES: %s", appmsg_outfail_openerr, translate_app_error(appmsg_outfail_openerr));
@@ -812,8 +812,8 @@ void outbox_failed_handler_cgm(DictionaryIterator *failed, AppMessageResult appm
 
 	// check if need to vibrate
 	if (!AppMsgOutFailAlert) {
-			//APP_LOG(APP_LOG_LEVEL_INFO, "APPMSG OUT FAIL ERROR: VIBRATE");
-			alert_handler_cgm(APPMSG_OUTFAIL_VIBE);
+		//APP_LOG(APP_LOG_LEVEL_INFO, "APPMSG OUT FAIL ERROR: VIBRATE");
+		alert_handler_cgm(APPMSG_OUTFAIL_VIBE);
 		AppMsgOutFailAlert = true;
 	} 
 	
@@ -1867,7 +1867,7 @@ static void send_cmd_cgm(void) {
 	//APP_LOG(APP_LOG_LEVEL_INFO, "SEND CMD, MSG OUTBOX OPEN, NO ERROR, ABOUT TO SEND MSG TO APP");
 	sendcmd_senderr = app_message_outbox_send();
 	
-	if (sendcmd_senderr != APP_MSG_OK) {
+	if (sendcmd_senderr != APP_MSG_OK && sendcmd_senderr != APP_MSG_BUSY && sendcmd_senderr != APP_MSG_SEND_REJECTED) {
 		 APP_LOG(APP_LOG_LEVEL_INFO, "WATCH SENDCMD SEND ERROR");
 		 APP_LOG(APP_LOG_LEVEL_DEBUG, "WATCH SENDCMD SEND ERR CODE: %i RES: %s", sendcmd_senderr, translate_app_error(sendcmd_senderr));
 	}
